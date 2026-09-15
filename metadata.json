@@ -1,0 +1,11 @@
+{
+  "name": "SIPAKAINGA",
+  "description": "Sistem Pelaporan Kegiatan Penyuluhan Keagamaan dan Pembangunan - Kemenag & IPARI",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
