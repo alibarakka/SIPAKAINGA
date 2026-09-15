@@ -1,4 +1,24 @@
-export type UserRole = 'penyuluh' | 'admin';
+export type UserRole = 'penyuluh' | 'admin' | 'kemenag_kabupaten';
+
+export type KecamatanGowa =
+  | 'Biringbulu'
+  | 'Bungaya'
+  | 'Bontolempangan'
+  | 'Bajeng'
+  | 'Bajeng Barat'
+  | 'Bontonompo'
+  | 'Bontonompo Selatan'
+  | 'Barombong'
+  | 'Bontomarannu'
+  | 'Parangloe'
+  | 'Pattallassang'
+  | 'Parigi'
+  | 'Pallangga'
+  | 'Tompobulu'
+  | 'Tinggimoncong'
+  | 'Tombolopao'
+  | 'Manuju'
+  | 'Somba Opu';
 
 export type JenjangJabatan = 
   | 'Penyuluh Agama Islam Ahli Pertama'
@@ -14,6 +34,7 @@ export interface PenyuluhProfile {
   pangkatGol: string;
   tmt: string;
   jabatan: JenjangJabatan;
+  kecamatan: KecamatanGowa;
   wilTugas: string;
   unitKerja: string;
   tempatTanggalLahir: string;
@@ -23,6 +44,7 @@ export interface PenyuluhProfile {
 }
 
 export interface KepalaKUAProfile {
+  kecamatan: KecamatanGowa;
   nama: string;
   nip: string;
   pangkatGol: string;
@@ -102,6 +124,9 @@ export interface LaporanKegiatan {
   penyuluhId: string;
   penyuluhNama: string;
   penyuluhNip: string;
+  penyuluhJenjang?: JenjangJabatan;
+  penyuluhPangkatGol?: string;
+  kecamatan?: KecamatanGowa;
   jenisLaporan: JenisLaporan;
   kategoriMateri: KategoriMateri;
   

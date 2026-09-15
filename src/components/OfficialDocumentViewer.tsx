@@ -219,30 +219,30 @@ export const OfficialDocumentViewer: React.FC<OfficialDocumentViewerProps> = ({
         {/* ======================= 2. SURAT TUGAS ======================= */}
         {activeTab === 'surat_tugas' && (
           <div className="space-y-6 font-sans text-xs sm:text-sm">
-            {/* Kop Surat Resmi KUA Somba Opu */}
+            {/* Kop Surat Resmi KUA */}
             <div className="flex items-center gap-4 border-b-2 border-slate-900 pb-3 text-center">
               <LogoKemenag size={65} className="shrink-0" />
               <div className="grow text-center">
                 <h3 className="font-bold text-xs uppercase tracking-wide">KEMENTERIAN AGAMA REPUBLIK INDONESIA</h3>
                 <h4 className="font-bold text-xs uppercase">KANTOR KABUPATEN GOWA</h4>
                 <h2 className="font-extrabold text-sm sm:text-base uppercase tracking-tight text-emerald-950">
-                  KANTOR URUSAN AGAMA ( KUA ) KEC. SOMBA OPU
+                  {kepalaKua.kuaName || `KANTOR URUSAN AGAMA ( KUA ) KEC. ${penyuluh.kecamatan?.toUpperCase() || 'SOMBA OPU'}`}
                 </h2>
                 <p className="text-[11px] text-slate-600 mt-0.5">
-                  Jalan : H. Masjid Raya 3 telp (0411) 865195, fax (0411) 867354 Sungguminasa, Kode Pos 92111
+                  {kepalaKua.alamatKua || 'Kabupaten Gowa, Sulawesi Selatan'} &bull; Telp: {kepalaKua.teleponKua || '(0411)'}
                 </p>
-                <p className="text-[10px] text-slate-500 italic">Email: kuasombaopunew@gmail.com</p>
+                <p className="text-[10px] text-slate-500 italic">Email: {kepalaKua.emailKua || 'kua.gowa@kemenag.go.id'}</p>
               </div>
             </div>
 
             {/* Surat Tugas Title */}
             <div className="text-center pt-2">
               <h2 className="font-bold text-base underline tracking-wider uppercase">SURAT TUGAS</h2>
-              <p className="text-xs font-mono mt-1">Nomor : B.063/KUA.21.06.15/BA.01/VII/2026</p>
+              <p className="text-xs font-mono mt-1">Nomor : B.063/KUA.21.06/BA.01/VII/2026</p>
             </div>
 
             <p className="leading-relaxed">
-              Kepala Kantor Urusan Agama ( KUA ) Kecamatan Somba Opu dengan berdasar pada:
+              Kepala {kepalaKua.kuaName || `Kantor Urusan Agama ( KUA ) Kecamatan ${penyuluh.kecamatan || 'Somba Opu'}`} dengan berdasar pada:
             </p>
 
             <div className="grid grid-cols-12 gap-2 pl-2 text-xs">
@@ -317,7 +317,7 @@ export const OfficialDocumentViewer: React.FC<OfficialDocumentViewerProps> = ({
             <div className="pt-4 flex justify-end">
               <div className="text-center w-64 space-y-1">
                 <p>Gowa, 01 JULI 2026</p>
-                <p className="font-bold">Kepala KUA Kec. Somba Opu</p>
+                <p className="font-bold">Kepala {kepalaKua.kuaName || `KUA Kec. ${penyuluh.kecamatan || 'Somba Opu'}`}</p>
                 <div className="py-2 flex justify-center">{renderQrStamp()}</div>
                 <p className="font-bold underline">{kepalaKua.nama}</p>
                 <p className="text-xs font-mono">Nip. {kepalaKua.nip}</p>
@@ -335,8 +335,8 @@ export const OfficialDocumentViewer: React.FC<OfficialDocumentViewerProps> = ({
               </div>
               <h3 className="font-bold text-xs uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</h3>
               <h4 className="font-bold text-xs uppercase">KEMENTERIAN AGAMA KABUPATEN GOWA</h4>
-              <h2 className="font-bold text-sm uppercase">KUA KECAMATAN SOMBA OPU</h2>
-              <p className="text-[11px] text-slate-600">Jl. Masjid Raya No. 24 Sungguminasa, KodePos 92111 (0411)</p>
+              <h2 className="font-bold text-sm uppercase">{kepalaKua.kuaName?.toUpperCase() || `KUA KECAMATAN ${penyuluh.kecamatan?.toUpperCase() || 'SOMBA OPU'}`}</h2>
+              <p className="text-[11px] text-slate-600">{kepalaKua.alamatKua || 'Kabupaten Gowa, Sulawesi Selatan'}</p>
             </div>
 
             <div className="text-center pt-2">
@@ -402,8 +402,8 @@ export const OfficialDocumentViewer: React.FC<OfficialDocumentViewerProps> = ({
               </div>
               <h3 className="font-bold text-xs uppercase">KEMENTERIAN AGAMA REPUBLIK INDONESIA</h3>
               <h4 className="font-bold text-xs uppercase">KEMENTERIAN AGAMA KABUPATEN GOWA</h4>
-              <h2 className="font-bold text-sm uppercase">KUA KECAMATAN SOMBA OPU</h2>
-              <p className="text-[11px] text-slate-600">Jl. Masjid Raya No. 24 Sungguminasa, KodePos 92111 (0411)</p>
+              <h2 className="font-bold text-sm uppercase">{kepalaKua.kuaName?.toUpperCase() || `KUA KECAMATAN ${penyuluh.kecamatan?.toUpperCase() || 'SOMBA OPU'}`}</h2>
+              <p className="text-[11px] text-slate-600">{kepalaKua.alamatKua || 'Kabupaten Gowa, Sulawesi Selatan'}</p>
             </div>
 
             <div className="text-center pt-1">
@@ -413,7 +413,7 @@ export const OfficialDocumentViewer: React.FC<OfficialDocumentViewerProps> = ({
             </div>
 
             <p className="leading-relaxed text-xs">
-              Yang bertanda tangan di bawah ini, Kepala Kantor Urusan Agama (KUA) Kec. Somba Opu,
+              Yang bertanda tangan di bawah ini, Kepala {kepalaKua.kuaName || `Kantor Urusan Agama (KUA) Kec. ${penyuluh.kecamatan || 'Somba Opu'}`},
             </p>
 
             <div className="bg-slate-50 p-3 rounded border border-slate-200 text-xs space-y-1">
@@ -543,7 +543,7 @@ export const OfficialDocumentViewer: React.FC<OfficialDocumentViewerProps> = ({
             <div className="pt-6 flex justify-end text-xs">
               <div className="text-center w-64 space-y-1">
                 <p>Gowa, 31 JULI 2026</p>
-                <p className="font-bold">Kepala KUA Kec. Somba Opu</p>
+                <p className="font-bold">Kepala {kepalaKua.kuaName || `KUA Kec. ${penyuluh.kecamatan || 'Somba Opu'}`}</p>
                 <div className="py-2 flex justify-center">{renderQrStamp()}</div>
                 <p className="font-bold underline">{kepalaKua.nama}</p>
                 <p className="font-mono">Nip. {kepalaKua.nip}</p>
@@ -630,7 +630,7 @@ export const OfficialDocumentViewer: React.FC<OfficialDocumentViewerProps> = ({
                 BIMBINGAN DAN PENYULUHAN AGAMA DAN PEMBANGUNAN
               </h3>
               <p className="text-xs font-semibold text-slate-600">
-                KEMENAG KAB. GOWA KEC. SOMBA OPU
+                KEMENAG KAB. GOWA {kepalaKua.kuaName?.toUpperCase() || `KEC. ${penyuluh.kecamatan?.toUpperCase() || 'SOMBA OPU'}`}
               </p>
             </div>
 
@@ -729,7 +729,7 @@ export const OfficialDocumentViewer: React.FC<OfficialDocumentViewerProps> = ({
               <div className="pt-6 grid grid-cols-2 text-center text-xs">
                 <div className="space-y-1">
                   <p>Mengetahui</p>
-                  <p className="font-bold">Kepala KUA Kec. Somba Opu</p>
+                  <p className="font-bold">Kepala {kepalaKua.kuaName || `KUA Kec. ${penyuluh.kecamatan || 'Somba Opu'}`}</p>
                   <div className="py-2 flex justify-center">{renderQrStamp()}</div>
                   <p className="font-bold underline">{kepalaKua.nama}</p>
                   <p className="font-mono">Nip. {kepalaKua.nip}</p>
@@ -738,7 +738,7 @@ export const OfficialDocumentViewer: React.FC<OfficialDocumentViewerProps> = ({
                 <div className="space-y-1">
                   <p>Penyuluh Agama Islam</p>
                   <div className="h-20 flex items-center justify-center italic text-emerald-800 font-serif text-lg">
-                    ( Masniati )
+                    ( {penyuluh.nama.split(',')[0]} )
                   </div>
                   <p className="font-bold underline">{penyuluh.nama}</p>
                   <p className="font-mono">Nip. {penyuluh.nip}</p>

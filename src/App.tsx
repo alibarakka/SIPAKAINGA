@@ -24,13 +24,19 @@ import {
   LaporanKegiatan, 
   UserRole, 
   NotifikasiAdmin, 
-  StatusVerifikasi 
+  StatusVerifikasi,
+  PenyuluhProfile,
+  KecamatanGowa 
 } from './types';
 import { 
   CURRENT_PENYULUH, 
   KEPALA_KUA, 
   INITIAL_KELOMPOK_BINAAN 
 } from './data/initialData';
+import { 
+  getKepalaKUA, 
+  DEFAULT_PENYULUH_LIST 
+} from './data/gowaData';
 import { 
   getStoredLaporan, 
   saveStoredLaporan, 
@@ -52,6 +58,7 @@ import { OfficialDocumentViewer } from './components/OfficialDocumentViewer';
 import { AdminNotificationModal } from './components/AdminNotificationModal';
 import { EncryptionSecurityModal } from './components/EncryptionSecurityModal';
 import { CloudDeploymentModal } from './components/CloudDeploymentModal';
+import { ProfileRoleSelectorModal } from './components/ProfileRoleSelectorModal';
 
 export default function App() {
   const [laporanList, setLaporanList] = useState<LaporanKegiatan[]>(() => getStoredLaporan());
@@ -60,6 +67,16 @@ export default function App() {
   const [currentRole, setCurrentRole] = useState<UserRole>('penyuluh');
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+
+  // Multi-tenant profile & KUA context state
+  const [activePenyuluh, setActivePenyuluh] = useState<PenyuluhProfile>(() => CURRENT_PENYULUH);
+  const [activeKecamatan, setActiveKecamatan] = useState<KecamatanGowa>(
+    () => (CURRENT_PENYULUH.kecamatan as KecamatanGowa) || 'Somba Opu'
+  );
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  // Current active Kepala KUA based on selected Kecamatan
+  const activeKepalaKua = getKepalaKUA(activeKecamatan);
 
   // Views & modals
   const [activeView, setActiveView] = useState<'dashboard' | 'reports' | 'create_report' | 'official_docs'>('dashboard');
@@ -165,7 +182,7 @@ export default function App() {
       );
     } else {
       showToast(
-        'Laporan kegiatan berhasil terkirim ke KUA Somba Opu dan notifikasi admin otomatis dipicu!',
+        `Laporan kegiatan berhasil terkirim ke KUA Kecamatan ${newLaporan.kecamatan || activeKecamatan} dan notifikasi admin otomatis dipicu!`,
         'success'
       );
     }
@@ -175,18 +192,22 @@ export default function App() {
 
   // Verify report by Admin / Kepala KUA
   const handleVerifyReport = (laporanId: string, status: StatusVerifikasi, catatan?: string) => {
-    const { updatedList, notificationAdded } = updateStatusVerifikasi(
+    const defaultCatatan = status === 'terverifikasi'
+      ? `Disetujui dan diverifikasi secara digital oleh Kepala KUA Kecamatan ${activeKecamatan}.`
+      : 'Mohon periksa kembali kelengkapan foto dokumentasi kegiatan.';
+
+    const { updatedList } = updateStatusVerifikasi(
       laporanId,
       status,
-      KEPALA_KUA.nama,
-      catatan
+      activeKepalaKua.nama,
+      catatan || defaultCatatan
     );
     setLaporanList(updatedList);
     setNotifikasiList(getStoredNotifikasi());
 
     showToast(
       status === 'terverifikasi'
-        ? `Laporan #${laporanId.toUpperCase()} berhasil diverifikasi dan ditandatangani digital oleh Kepala KUA!`
+        ? `Laporan #${laporanId.toUpperCase()} berhasil diverifikasi & ditandatangani digital oleh Kepala KUA ${activeKecamatan} (${activeKepalaKua.nama})!`
         : `Laporan #${laporanId.toUpperCase()} dikembalikan untuk perbaikan.`,
       status === 'terverifikasi' ? 'success' : 'warning'
     );
@@ -226,6 +247,9 @@ export default function App() {
       <Navbar
         currentRole={currentRole}
         onRoleChange={setCurrentRole}
+        activePenyuluh={activePenyuluh}
+        activeKecamatan={activeKecamatan}
+        onOpenProfileModal={() => setIsProfileModalOpen(true)}
         isOnline={isOnline}
         onToggleOnline={handleToggleOnline}
         offlineQueueCount={offlineQueue.length}
@@ -272,7 +296,7 @@ export default function App() {
                   Dasbor Produktivitas Penyuluhan Keagamaan & Pembangunan
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Kabupaten Gowa &bull; Wilayah KUA Kecamatan Somba Opu
+                  Kabupaten Gowa &bull; Wilayah KUA Kecamatan {activeKecamatan} &bull; {activePenyuluh.nama} ({activePenyuluh.jabatan})
                 </p>
               </div>
 
@@ -289,8 +313,8 @@ export default function App() {
                   onClick={() =>
                     exportLaporanToExcel(
                       laporanList,
-                      CURRENT_PENYULUH,
-                      KEPALA_KUA,
+                      activePenyuluh,
+                      activeKepalaKua,
                       INITIAL_KELOMPOK_BINAAN,
                       'JULI',
                       '2026'
@@ -314,6 +338,8 @@ export default function App() {
 
             <DashboardAnalytics
               laporanList={laporanList}
+              activeKecamatan={activeKecamatan}
+              currentRole={currentRole}
               onSelectReport={(id) => handleOpenDocViewer(id, 'lembar_kegiatan')}
             />
           </div>
@@ -328,7 +354,7 @@ export default function App() {
                   Daftar Laporan Kegiatan Lapangan
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Bimbingan tatap muka, layanan konseling perorangan, dan pengembangan model
+                  Bimbingan tatap muka, layanan konseling perorangan, dan pengembangan model (18 Kecamatan Gowa)
                 </p>
               </div>
 
@@ -337,8 +363,8 @@ export default function App() {
                   onClick={() =>
                     exportLaporanToExcel(
                       laporanList,
-                      CURRENT_PENYULUH,
-                      KEPALA_KUA,
+                      activePenyuluh,
+                      activeKepalaKua,
                       INITIAL_KELOMPOK_BINAAN,
                       'JULI',
                       '2026'
@@ -363,6 +389,7 @@ export default function App() {
             <ReportList
               laporanList={laporanList}
               currentRole={currentRole}
+              filterKecamatanDefault={currentRole === 'admin' ? activeKecamatan : 'all'}
               onSelectLaporan={(lap) => handleOpenDocViewer(lap.id, 'lembar_kegiatan')}
               onVerifyLaporan={handleVerifyReport}
               onOpenDocumentViewer={(id) => handleOpenDocViewer(id, 'lembar_kegiatan')}
@@ -398,6 +425,8 @@ export default function App() {
               onSubmit={handleReportSubmit}
               isOnline={isOnline}
               onCancel={() => setActiveView('reports')}
+              activePenyuluh={activePenyuluh}
+              defaultKecamatan={activeKecamatan}
             />
           </div>
         )}
@@ -406,8 +435,8 @@ export default function App() {
         {activeView === 'official_docs' && (
           <OfficialDocumentViewer
             laporanList={laporanList}
-            penyuluh={CURRENT_PENYULUH}
-            kepalaKua={KEPALA_KUA}
+            penyuluh={activePenyuluh}
+            kepalaKua={activeKepalaKua}
             kelompokList={INITIAL_KELOMPOK_BINAAN}
             initialTab={docInitialTab}
             selectedLaporanId={selectedDocReportId}
@@ -486,6 +515,52 @@ export default function App() {
         onSyncComplete={(newLaporan, newNotifs) => {
           setLaporanList(newLaporan);
           setNotifikasiList(newNotifs);
+        }}
+        showToast={showToast}
+      />
+
+      {/* Profile & Multi-Kecamatan Role Selector Modal */}
+      <ProfileRoleSelectorModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        currentRole={currentRole}
+        onRoleChange={(role) => {
+          setCurrentRole(role);
+          showToast(
+            `Mode dialihkan ke: ${
+              role === 'admin'
+                ? `Kepala KUA Kecamatan ${activeKecamatan} (Admin Verifikator)`
+                : 'Penyuluh Agama Islam (Pelapor)'
+            }`,
+            'info'
+          );
+        }}
+        activePenyuluh={activePenyuluh}
+        onSelectPenyuluh={(penyuluh) => {
+          setActivePenyuluh(penyuluh);
+          setActiveKecamatan(penyuluh.kecamatan as KecamatanGowa);
+          setCurrentRole('penyuluh');
+          showToast(
+            `Profil aktif dialihkan ke: ${penyuluh.nama} (${penyuluh.jabatan}) - KUA Kec. ${penyuluh.kecamatan}`,
+            'success'
+          );
+        }}
+        activeKecamatan={activeKecamatan}
+        onSelectKecamatan={(kec) => {
+          setActiveKecamatan(kec);
+          // Check if there's a registered profile in default list for this kecamatan
+          const match = DEFAULT_PENYULUH_LIST.find((p) => p.kecamatan === kec);
+          if (match) {
+            setActivePenyuluh(match);
+          } else {
+            setActivePenyuluh((prev) => ({
+              ...prev,
+              kecamatan: kec,
+              wilTugas: `KUA Kec. ${kec}`,
+              unitKerja: 'Kementerian Agama Kabupaten Gowa',
+            }));
+          }
+          showToast(`Wilayah KUA berhasil dialihkan ke: KUA Kecamatan ${kec}`, 'info');
         }}
         showToast={showToast}
       />

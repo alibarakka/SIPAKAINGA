@@ -9,13 +9,29 @@ interface GpsTrackerProps {
 }
 
 const GOWA_PRESETS = [
+  // Somba Opu
   { nama: 'Aula KUA Somba Opu', kel: 'Sungguminasa', kec: 'Somba Opu', lat: -5.201389, lng: 119.452811 },
   { nama: 'Masjid Nurul Ihsan Bontotanga', kel: 'Paccinongan', kec: 'Somba Opu', lat: -5.198421, lng: 119.463982 },
   { nama: 'Masjid Al-Hamid Hertasning', kel: 'Paccinongan', kec: 'Somba Opu', lat: -5.185243, lng: 119.467812 },
   { nama: 'Masjid Nurul Mujaddid Pao-Pao', kel: 'Tombolo', kec: 'Somba Opu', lat: -5.192104, lng: 119.471203 },
+  // Pallangga
+  { nama: 'Aula KUA Pallangga', kel: 'Tetebatu', kec: 'Pallangga', lat: -5.228410, lng: 119.453910 },
+  { nama: 'Masjid Nurul Huda Pallangga', kel: 'Tetebatu', kec: 'Pallangga', lat: -5.231200, lng: 119.458900 },
+  // Bajeng & Bajeng Barat
+  { nama: 'KUA Kecamatan Bajeng', kel: 'Limbung', kec: 'Bajeng', lat: -5.302410, lng: 119.412910 },
+  { nama: 'Masjid Besar Limbung', kel: 'Limbung', kec: 'Bajeng', lat: -5.304500, lng: 119.415200 },
+  // Tinggimoncong & Tombolopao
+  { nama: 'KUA Kecamatan Tinggimoncong', kel: 'Malino', kec: 'Tinggimoncong', lat: -5.253410, lng: 119.852910 },
+  { nama: 'Masjid Besar Malino', kel: 'Malino', kec: 'Tinggimoncong', lat: -5.255800, lng: 119.854100 },
+  // Bontomarannu & Pattallassang
+  { nama: 'KUA Kecamatan Bontomarannu', kel: 'Borongloe', kec: 'Bontomarannu', lat: -5.215100, lng: 119.512000 },
   { nama: 'Lapas Perempuan Bollangi', kel: 'Bollangi', kec: 'Pattallassang', lat: -5.228114, lng: 119.512391 },
-  { nama: 'Gedung Syariah UIN Alauddin', kel: 'Romang Polong', kec: 'Somba Opu', lat: -5.205118, lng: 119.493412 },
-  { nama: 'Masjid Al-Muhajirin Kalegowa', kel: 'Kalegowa', kec: 'Somba Opu', lat: -5.211029, lng: 119.458921 },
+  // Barombong & Bontonompo
+  { nama: 'KUA Kecamatan Barombong', kel: 'Kanjilo', kec: 'Barombong', lat: -5.221000, lng: 119.415000 },
+  { nama: 'KUA Kecamatan Bontonompo', kel: 'Tamallayang', kec: 'Bontonompo', lat: -5.352410, lng: 119.382910 },
+  // Parangloe, Manuju, Tompobulu
+  { nama: 'KUA Kecamatan Parangloe', kel: 'Lanna', kec: 'Parangloe', lat: -5.241000, lng: 119.615000 },
+  { nama: 'KUA Kecamatan Tompobulu', kel: 'Malakaji', kec: 'Tompobulu', lat: -5.412000, lng: 119.915000 },
 ];
 
 export const GpsTracker: React.FC<GpsTrackerProps> = ({ value, onChange, isFieldMode = true }) => {
@@ -187,7 +203,7 @@ export const GpsTracker: React.FC<GpsTrackerProps> = ({ value, onChange, isField
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
               <MapPin className="w-3 h-3 text-emerald-600" />
-              Pilih Titik Lokasi Cepat Binaan KUA Somba Opu:
+              Pilih Titik Lokasi Cepat KUA di Kab. Gowa:
             </span>
           </div>
           <div className="flex flex-wrap gap-1.5">

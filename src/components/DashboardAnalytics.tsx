@@ -11,17 +11,26 @@ import {
   Clock, 
   PieChart as PieChartIcon, 
   ShieldAlert, 
-  Building2 
+  Building2,
+  Layers,
+  GraduationCap
 } from 'lucide-react';
-import { LaporanKegiatan } from '../types';
+import { LaporanKegiatan, KecamatanGowa, UserRole } from '../types';
+import { KECAMATAN_GOWA_LIST, JENJANG_JABATAN_LIST } from '../data/gowaData';
 
 interface DashboardAnalyticsProps {
   laporanList: LaporanKegiatan[];
+  activeKecamatan?: KecamatanGowa;
+  currentRole?: UserRole;
   onSelectReport?: (reportId: string) => void;
 }
 
-export const DashboardAnalytics: React.FC<DashboardAnalyticsProps> = ({ laporanList }) => {
-  const [filterKelurahan, setFilterKelurahan] = useState<string>('all');
+export const DashboardAnalytics: React.FC<DashboardAnalyticsProps> = ({ 
+  laporanList,
+  activeKecamatan = 'Somba Opu',
+  currentRole = 'penyuluh',
+}) => {
+  const [filterKecamatan, setFilterKecamatan] = useState<string>('all');
 
   // Compute metrics
   const totalKegiatan = laporanList.length;
@@ -31,6 +40,29 @@ export const DashboardAnalytics: React.FC<DashboardAnalyticsProps> = ({ laporanL
   const verifikasiRate = totalKegiatan > 0 ? Math.round((terverifikasiCount / totalKegiatan) * 100) : 0;
   const menungguVerifikasiCount = laporanList.filter((l) => l.statusVerifikasi === 'menunggu_verifikasi').length;
   const offlineDraftCount = laporanList.filter((l) => l.statusVerifikasi === 'draf_offline').length;
+
+  // Group by Kecamatan (Kabupaten Gowa)
+  const kecamatanStatsMap: Record<string, { kegiatan: number; jamaah: number }> = {};
+  laporanList.forEach((l) => {
+    const kec = l.kecamatan || 'Somba Opu';
+    if (!kecamatanStatsMap[kec]) {
+      kecamatanStatsMap[kec] = { kegiatan: 0, jamaah: 0 };
+    }
+    kecamatanStatsMap[kec].kegiatan += 1;
+    kecamatanStatsMap[kec].jamaah += l.jumlahPeserta || 0;
+  });
+  const kecamatanEntries = Object.entries(kecamatanStatsMap).sort((a, b) => b[1].kegiatan - a[1].kegiatan);
+
+  // Group by Jenjang Jabatan
+  const jenjangMap: Record<string, number> = {
+    'Penyuluh Ahli Pertama': 0,
+    'Penyuluh Ahli Muda': 0,
+    'Penyuluh Ahli Madya': 0,
+  };
+  laporanList.forEach((l) => {
+    const j = l.penyuluhJenjang || 'Penyuluh Ahli Muda';
+    jenjangMap[j] = (jenjangMap[j] || 0) + 1;
+  });
 
   // Group by Kelurahan / Wilayah
   const wilayahMap: Record<string, { kegiatan: number; jamaah: number }> = {};
@@ -73,13 +105,13 @@ export const DashboardAnalytics: React.FC<DashboardAnalyticsProps> = ({ laporanL
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mb-2">
-              <Sparkles className="w-3.5 h-3.5" /> Evaluasi Kinerja Fungsional PAI Ahli Muda
+              <Sparkles className="w-3.5 h-3.5" /> Supervisi &amp; Produktivitas 18 Kecamatan Kab. Gowa
             </div>
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
-              Dasbor Produktivitas & Kinerja Penyuluhan Real-Time
+              Dasbor Produktivitas &amp; Kinerja Penyuluhan Real-Time
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mt-1">
-              Monitoring capaian kinerja tatap muka, sebaran wilayah binaan, dan verifikasi dokumen resmi KUA Somba Opu.
+              Monitoring capaian kinerja tatap muka untuk Penyuluh Ahli Pertama, Ahli Muda, &amp; Ahli Madya di seluruh KUA Kecamatan Kabupaten Gowa.
             </p>
           </div>
 
@@ -94,6 +126,33 @@ export const DashboardAnalytics: React.FC<DashboardAnalyticsProps> = ({ laporanL
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Sebaran Jenjang Fungsional PAI Bar */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {JENJANG_JABATAN_LIST.map((jenjang) => {
+          const count = jenjangMap[jenjang.id] || 0;
+          return (
+            <div
+              key={jenjang.id}
+              className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-800 flex items-center justify-center font-bold text-xs border border-emerald-200">
+                  {jenjang.singkatan}
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">{jenjang.label}</h4>
+                  <p className="text-[10px] text-slate-500">Golongan: {jenjang.golonganDefault}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-lg font-black text-emerald-700">{count}</span>
+                <span className="text-[10px] text-slate-400 block font-medium">Laporan Masuk</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* KPI Cards Row */}
@@ -247,6 +306,58 @@ export const DashboardAnalytics: React.FC<DashboardAnalyticsProps> = ({ laporanL
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Sebaran 18 Kecamatan di Kabupaten Gowa */}
+      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div>
+            <h3 className="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-emerald-700" />
+              Sebaran 18 KUA Kecamatan di Kabupaten Gowa
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Status pelaporan dan administrasi Kepala KUA se-Kabupaten Gowa
+            </p>
+          </div>
+          <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full w-fit">
+            18 KUA Kecamatan Terdaftar
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          {KECAMATAN_GOWA_LIST.map((kec) => {
+            const stat = kecamatanStatsMap[kec];
+            const isActive = kec === activeKecamatan;
+            return (
+              <div
+                key={kec}
+                className={`p-3 rounded-lg border transition-all ${
+                  isActive
+                    ? 'border-emerald-500 bg-emerald-50/50 shadow-2xs'
+                    : 'border-slate-200 bg-slate-50/40 hover:bg-slate-50 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 truncate" title={kec}>
+                    {kec}
+                  </span>
+                  {isActive && (
+                    <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100 px-1 rounded">
+                      Aktif
+                    </span>
+                  )}
+                </div>
+                <div className="mt-2 flex items-baseline justify-between border-t border-slate-200/50 pt-1">
+                  <span className={`text-base font-black ${stat?.kegiatan ? 'text-emerald-700' : 'text-slate-400'}`}>
+                    {stat?.kegiatan || 0}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium">Laporan</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

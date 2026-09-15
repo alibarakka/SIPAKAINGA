@@ -11,16 +11,21 @@ import {
   MapPin, 
   Lock, 
   WifiOff, 
-  AlertCircle 
+  AlertCircle,
+  Building2,
+  Award
 } from 'lucide-react';
 import { 
   LaporanKegiatan, 
   JenisLaporan, 
   KategoriMateri, 
   LocationCoordinate, 
-  BuktiFoto 
+  BuktiFoto,
+  PenyuluhProfile,
+  KecamatanGowa
 } from '../types';
-import { CURRENT_PENYULUH, INITIAL_KELOMPOK_BINAAN } from '../data/initialData';
+import { INITIAL_KELOMPOK_BINAAN } from '../data/initialData';
+import { KECAMATAN_GOWA_LIST, JENJANG_JABATAN_LIST } from '../data/gowaData';
 import { GpsTracker } from './GpsTracker';
 import { PhotoCollage } from './PhotoCollage';
 import { encryptData } from '../utils/crypto';
@@ -29,6 +34,7 @@ interface ReportFormProps {
   onSubmit: (laporan: LaporanKegiatan) => void;
   isOnline: boolean;
   onCancel?: () => void;
+  activePenyuluh: PenyuluhProfile;
 }
 
 const KATEGORI_MATERI_LIST: KategoriMateri[] = [
@@ -60,7 +66,8 @@ const JENIS_LAPORAN_LABELS: { value: JenisLaporan; label: string; prefix: string
 
 const HARI_LIST = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'AHAD'];
 
-export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, isOnline, onCancel }) => {
+export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, isOnline, onCancel, activePenyuluh }) => {
+  const [selectedKecamatan, setSelectedKecamatan] = useState<KecamatanGowa>(activePenyuluh.kecamatan || 'Somba Opu');
   const [jenisLaporan, setJenisLaporan] = useState<JenisLaporan>('bimbingan_penyuluhan');
   const [kategoriMateri, setKategoriMateri] = useState<KategoriMateri>('Keluarga Sakinah');
   const [kelompokSasaran, setKelompokSasaran] = useState('Majelis Taklim Nurul Ihsan');
@@ -71,6 +78,18 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, isOnline, onCa
   const [deskripsiSingkatMateri, setDeskripsiSingkatMateri] = useState(
     'Mengkaji ayat-ayat Al-Qur’an mengenai akhlak mulia dalam keluarga dan ketahanan moral generasi penerus.'
   );
+
+  // Sync selectedKecamatan if activePenyuluh changes
+  useEffect(() => {
+    if (activePenyuluh.kecamatan) {
+      setSelectedKecamatan(activePenyuluh.kecamatan);
+      setKoordinat(prev => ({
+        ...prev,
+        kecamatan: activePenyuluh.kecamatan,
+        lokasiNama: `KUA Kecamatan ${activePenyuluh.kecamatan}`
+      }));
+    }
+  }, [activePenyuluh]);
 
   const todayStr = new Date().toISOString().split('T')[0];
   const [tanggalPelaksanaan, setTanggalPelaksanaan] = useState(todayStr);
@@ -154,7 +173,10 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, isOnline, onCa
     let encryptedHash = '';
     if (enableEncryption) {
       const payloadToHash = {
-        penyuluh: CURRENT_PENYULUH.nama,
+        penyuluh: activePenyuluh.nama,
+        nip: activePenyuluh.nip,
+        jenjang: activePenyuluh.jabatan,
+        kecamatan: selectedKecamatan,
         kelompok: kelompokSasaran,
         materi: judulMateri,
         tanggal: tanggalPelaksanaan,
@@ -166,10 +188,13 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, isOnline, onCa
 
     const newReport: LaporanKegiatan = {
       id: `lap-${Date.now().toString().slice(-6)}`,
-      nomorSuratTugas: 'B.063/KUA.21.06.15/BA.01/VII/2026',
-      penyuluhId: CURRENT_PENYULUH.id,
-      penyuluhNama: CURRENT_PENYULUH.nama,
-      penyuluhNip: CURRENT_PENYULUH.nip,
+      nomorSuratTugas: `B.0${Math.floor(Math.random() * 80 + 10)}/KUA.21.06/${selectedKecamatan.toUpperCase().slice(0, 3)}/VII/2026`,
+      penyuluhId: activePenyuluh.id,
+      penyuluhNama: activePenyuluh.nama,
+      penyuluhNip: activePenyuluh.nip,
+      penyuluhJenjang: activePenyuluh.jabatan,
+      penyuluhPangkatGol: activePenyuluh.pangkatGol,
+      kecamatan: selectedKecamatan,
       jenisLaporan,
       kategoriMateri,
       kelompokSasaran,
@@ -184,7 +209,10 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, isOnline, onCa
       waktuMulai,
       waktuSelesai,
       lokasiSpesifik,
-      koordinat,
+      koordinat: {
+        ...koordinat,
+        kecamatan: selectedKecamatan,
+      },
       fotoList,
       namaKlienAtauPeran: namaKlien,
       metodeLayanan,
@@ -216,35 +244,82 @@ export const ReportForm: React.FC<ReportFormProps> = ({ onSubmit, isOnline, onCa
         </div>
       )}
 
-      {/* Identitas Penyuluh (ReadOnly / Quick verification card) */}
-      <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3.5 flex items-center justify-between">
+      {/* Identitas Penyuluh (Dynamic Profile & Jenjang Jabatan) */}
+      <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-emerald-700 text-white font-bold flex items-center justify-center text-sm shadow-xs">
-            PAI
-          </div>
+          <img
+            src={activePenyuluh.fotoUrl || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80'}
+            alt={activePenyuluh.nama}
+            className="w-12 h-12 rounded-full object-cover border-2 border-emerald-600 shadow-xs shrink-0"
+          />
           <div>
-            <h4 className="text-xs font-bold text-emerald-950 uppercase tracking-wide">Penyuluh Pelapor:</h4>
-            <p className="text-sm font-bold text-slate-800">{CURRENT_PENYULUH.nama}</p>
+            <div className="flex items-center gap-2">
+              <h4 className="text-xs font-bold text-emerald-950 uppercase tracking-wide">Penyuluh Pelapor:</h4>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-700 text-white shadow-2xs">
+                {activePenyuluh.jabatan}
+              </span>
+            </div>
+            <p className="text-sm sm:text-base font-bold text-slate-900">{activePenyuluh.nama}</p>
             <p className="text-xs text-slate-600">
-              NIP: {CURRENT_PENYULUH.nip} | {CURRENT_PENYULUH.jabatan} | {CURRENT_PENYULUH.wilTugas}
+              NIP: <span className="font-semibold text-slate-800">{activePenyuluh.nip}</span> &bull; {activePenyuluh.pangkatGol} &bull; {activePenyuluh.wilTugas}
             </p>
           </div>
         </div>
-        <span className="hidden sm:inline-flex px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
-          Kemenag Kab. Gowa
-        </span>
+
+        <div className="sm:text-right border-t sm:border-t-0 border-emerald-200/60 pt-2 sm:pt-0">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block">
+            Wilayah KUA:
+          </span>
+          <span className="text-xs font-black text-emerald-950">
+            Kecamatan {selectedKecamatan}
+          </span>
+        </div>
       </div>
 
-      {/* Section 1: Klasifikasi Kegiatan */}
+      {/* Section 1: Klasifikasi Kegiatan & Pemilihan KUA Kecamatan */}
       <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-xs space-y-4">
         <div className="border-b border-slate-100 pb-2.5 flex items-center justify-between">
           <h3 className="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
             <FileText className="w-4 h-4 text-emerald-700" />
-            1. Ruang Lingkup & Kategori Bimbingan
+            1. Ruang Lingkup &amp; Kategori Bimbingan
           </h3>
           <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
             Kepdirjen Bimas Islam No. 794/2025
           </span>
+        </div>
+
+        {/* Pemilihan Kecamatan Penugasan di Kab. Gowa */}
+        <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-lg">
+          <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+            <Building2 className="w-3.5 h-3.5 text-emerald-700" />
+            <span>KUA Kecamatan Penugasan (Kabupaten Gowa)</span>
+            <span className="text-rose-500">*</span>
+            <span className="text-[10px] text-slate-500 font-normal ml-auto">
+              18 Kecamatan Tersedia
+            </span>
+          </label>
+          <select
+            value={selectedKecamatan}
+            onChange={(e) => {
+              const k = e.target.value as KecamatanGowa;
+              setSelectedKecamatan(k);
+              setKoordinat(prev => ({
+                ...prev,
+                kecamatan: k,
+                lokasiNama: `KUA Kecamatan ${k}`
+              }));
+            }}
+            className="w-full px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
+          >
+            {KECAMATAN_GOWA_LIST.map((kec) => (
+              <option key={kec} value={kec}>
+                KUA Kecamatan {kec}
+              </option>
+            ))}
+          </select>
+          <p className="text-[11px] text-slate-500 mt-1">
+            Laporan akan secara otomatis masuk ke antrian verifikasi Kepala KUA Kecamatan {selectedKecamatan}.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

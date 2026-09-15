@@ -13,14 +13,20 @@ import {
   Layers, 
   Check, 
   HelpCircle,
-  Cloud 
+  Cloud,
+  Building2,
+  User,
+  SlidersHorizontal
 } from 'lucide-react';
-import { UserRole } from '../types';
+import { UserRole, PenyuluhProfile, KecamatanGowa } from '../types';
 import { LogoKemenag, LogoIpari, LogoEPA } from './Logos';
 
 interface NavbarProps {
   currentRole: UserRole;
   onRoleChange: (role: UserRole) => void;
+  activePenyuluh: PenyuluhProfile;
+  activeKecamatan: KecamatanGowa;
+  onOpenProfileModal: () => void;
   isOnline: boolean;
   onToggleOnline: () => void;
   offlineQueueCount: number;
@@ -38,6 +44,9 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   currentRole,
   onRoleChange,
+  activePenyuluh,
+  activeKecamatan,
+  onOpenProfileModal,
   isOnline,
   onToggleOnline,
   offlineQueueCount,
@@ -63,10 +72,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
             <div className="border-l border-emerald-700/80 pl-2.5">
               <span className="font-bold tracking-wide uppercase block text-[11px] sm:text-xs">
-                Kementerian Agama RI &bull; IPARI
+                Kementerian Agama RI &bull; IPARI Kab. Gowa
               </span>
               <span className="text-[10px] text-emerald-200 hidden sm:inline">
-                KUA Kecamatan Somba Opu, Kabupaten Gowa - Sulawesi Selatan
+                {currentRole === 'penyuluh' ? (
+                  <>KUA Kec. {activePenyuluh.kecamatan} &bull; {activePenyuluh.jabatan}</>
+                ) : currentRole === 'admin' ? (
+                  <>Kantor KUA Kec. {activeKecamatan} (Admin Kepala KUA)</>
+                ) : (
+                  <>Kantor Kementerian Agama Kabupaten Gowa (Supervisi 18 Kecamatan)</>
+                )}
               </span>
             </div>
           </div>
@@ -215,17 +230,37 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </nav>
 
-        {/* User Role Switcher (Penyuluh vs Admin Kemenag) */}
+        {/* User Role Switcher & Multi-Kecamatan Profile Selector */}
         <div className="flex items-center gap-2 border-t sm:border-t-0 sm:border-l border-slate-200 sm:pl-3 pt-2 sm:pt-0 w-full sm:w-auto justify-between sm:justify-start">
-          <div className="text-right hidden md:block">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
-              Peran Pengguna:
-            </span>
-            <span className="text-xs font-bold text-slate-800">
-              {currentRole === 'penyuluh' ? 'Dr. Hj. Masniati' : 'Kepala KUA Somba Opu'}
-            </span>
-          </div>
+          {/* Active Profile Info & Switcher Button */}
+          <button
+            onClick={onOpenProfileModal}
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all text-left group"
+            title="Klik untuk ganti Kecamatan atau Profil Penyuluh/Admin KUA"
+          >
+            {currentRole === 'penyuluh' ? (
+              <img
+                src={activePenyuluh.fotoUrl || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80'}
+                alt={activePenyuluh.nama}
+                className="w-7 h-7 rounded-full object-cover border border-emerald-600 shadow-2xs"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-emerald-800 text-white flex items-center justify-center text-xs font-bold shadow-2xs">
+                <Building2 className="w-4 h-4" />
+              </div>
+            )}
+            <div className="hidden lg:block">
+              <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider leading-none">
+                {currentRole === 'penyuluh' ? `PAI Kec. ${activePenyuluh.kecamatan}` : `KUA Kec. ${activeKecamatan}`}
+              </span>
+              <span className="text-xs font-bold text-slate-800 group-hover:text-emerald-900 leading-tight block truncate max-w-[140px]">
+                {currentRole === 'penyuluh' ? activePenyuluh.nama.split(',')[0] : `Kepala KUA`}
+              </span>
+            </div>
+            <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-700 ml-0.5" />
+          </button>
 
+          {/* Quick Role Toggle */}
           <div className="inline-flex rounded-lg bg-slate-100 p-1 text-xs font-semibold">
             <button
               onClick={() => onRoleChange('penyuluh')}
@@ -245,7 +280,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              Admin / KUA
+              Kepala KUA
             </button>
           </div>
         </div>

@@ -16,9 +16,12 @@ import {
   Eye, 
   ThumbsUp, 
   FileSpreadsheet, 
-  Share2 
+  Share2,
+  Building2,
+  Award
 } from 'lucide-react';
-import { LaporanKegiatan, StatusVerifikasi, KategoriMateri, UserRole } from '../types';
+import { LaporanKegiatan, StatusVerifikasi, KategoriMateri, UserRole, KecamatanGowa } from '../types';
+import { KECAMATAN_GOWA_LIST, JENJANG_JABATAN_LIST } from '../data/gowaData';
 
 interface ReportListProps {
   laporanList: LaporanKegiatan[];
@@ -27,6 +30,7 @@ interface ReportListProps {
   onOpenDocumentViewer: (laporanId: string) => void;
   onOpenEncryptionModal: (laporan: LaporanKegiatan) => void;
   currentRole: UserRole;
+  filterKecamatanDefault?: string;
 }
 
 export const ReportList: React.FC<ReportListProps> = ({
@@ -36,16 +40,21 @@ export const ReportList: React.FC<ReportListProps> = ({
   onOpenDocumentViewer,
   onOpenEncryptionModal,
   currentRole,
+  filterKecamatanDefault = 'all',
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedKategori, setSelectedKategori] = useState<string>('all');
+  const [selectedKecamatan, setSelectedKecamatan] = useState<string>(filterKecamatanDefault);
+  const [selectedJenjang, setSelectedJenjang] = useState<string>('all');
 
   const filteredReports = laporanList.filter((lap) => {
     const matchesSearch =
       lap.judulMateri.toLowerCase().includes(searchQuery.toLowerCase()) ||
       lap.kelompokSasaran.toLowerCase().includes(searchQuery.toLowerCase()) ||
       lap.lokasiSpesifik.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (lap.penyuluhNama || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (lap.kecamatan || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (lap.koordinat?.kelurahan || '').toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus =
@@ -54,37 +63,73 @@ export const ReportList: React.FC<ReportListProps> = ({
     const matchesKategori =
       selectedKategori === 'all' || lap.kategoriMateri === selectedKategori;
 
-    return matchesSearch && matchesStatus && matchesKategori;
+    const matchesKecamatan =
+      selectedKecamatan === 'all' || (lap.kecamatan || 'Somba Opu') === selectedKecamatan;
+
+    const matchesJenjang =
+      selectedJenjang === 'all' || lap.penyuluhJenjang === selectedJenjang;
+
+    return matchesSearch && matchesStatus && matchesKategori && matchesKecamatan && matchesJenjang;
   });
 
   return (
     <div className="space-y-4">
       {/* Search & Filter Bar */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-3">
-        <div className="flex flex-col sm:flex-row items-center gap-3">
+        <div className="flex flex-col md:flex-row items-center gap-3">
           <div className="relative grow w-full">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari kelompok binaan, judul materi, kelurahan, atau lokasi..."
-              className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="Cari nama penyuluh, materi, binaan, kecamatan, atau kelurahan..."
+              className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-lg border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full md:w-auto">
+            {/* Kecamatan Filter (18 Kecamatan Gowa) */}
+            <select
+              value={selectedKecamatan}
+              onChange={(e) => setSelectedKecamatan(e.target.value)}
+              className="text-xs px-2.5 py-2 rounded-lg border border-slate-200 bg-white font-medium text-slate-700 focus:outline-hidden"
+              title="Filter Kecamatan di Kabupaten Gowa"
+            >
+              <option value="all">Semua Kecamatan (18)</option>
+              {KECAMATAN_GOWA_LIST.map((kec) => (
+                <option key={kec} value={kec}>
+                  Kec. {kec}
+                </option>
+              ))}
+            </select>
+
+            {/* Jenjang Filter */}
+            <select
+              value={selectedJenjang}
+              onChange={(e) => setSelectedJenjang(e.target.value)}
+              className="text-xs px-2.5 py-2 rounded-lg border border-slate-200 bg-white font-medium text-slate-700 focus:outline-hidden"
+              title="Filter Jenjang Jabatan Fungsional"
+            >
+              <option value="all">Semua Jenjang</option>
+              {JENJANG_JABATAN_LIST.map((j) => (
+                <option key={j.id} value={j.id}>
+                  {j.singkatan}
+                </option>
+              ))}
+            </select>
+
             {/* Status Filter */}
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="grow sm:grow-0 text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white font-medium text-slate-700 focus:outline-none"
+              className="col-span-2 sm:col-span-1 text-xs px-2.5 py-2 rounded-lg border border-slate-200 bg-white font-medium text-slate-700 focus:outline-hidden"
             >
-              <option value="all">Semua Status Verifikasi</option>
-              <option value="terverifikasi">✅ Terverifikasi</option>
-              <option value="menunggu_verifikasi">⏳ Menunggu Verifikasi</option>
-              <option value="draf_offline">📱 Draf Offline</option>
-              <option value="butuh_revisi">⚠️ Butuh Revisi</option>
+              <option value="all">Semua Status</option>
+              <option value="terverifikasi">Terverifikasi</option>
+              <option value="menunggu_verifikasi">Menunggu Verifikasi</option>
+              <option value="draf_offline">Draf Offline</option>
+              <option value="butuh_revisi">Butuh Revisi</option>
             </select>
           </div>
         </div>
@@ -140,14 +185,25 @@ export const ReportList: React.FC<ReportListProps> = ({
               >
                 {/* Card Header */}
                 <div className="flex flex-wrap items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <div className="space-y-1.5">
+                    {/* Top Badges: ID, Kategori, Kecamatan, Jenjang, Enkripsi */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="font-mono text-xs font-bold text-slate-500 uppercase bg-slate-100 px-2 py-0.5 rounded">
                         #{lap.id.toUpperCase()}
                       </span>
-                      <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md">
+                      <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
                         {lap.kategoriMateri}
                       </span>
+                      <span className="text-[11px] font-bold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded flex items-center gap-1">
+                        <Building2 className="w-3 h-3 text-emerald-700" />
+                        Kec. {lap.kecamatan || 'Somba Opu'}
+                      </span>
+                      {lap.penyuluhJenjang && (
+                        <span className="text-[10px] font-bold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1">
+                          <Award className="w-3 h-3 text-amber-600" />
+                          {lap.penyuluhJenjang.replace('Penyuluh ', '')}
+                        </span>
+                      )}
                       {lap.isEncrypted && (
                         <button
                           onClick={() => onOpenEncryptionModal(lap)}
@@ -156,6 +212,14 @@ export const ReportList: React.FC<ReportListProps> = ({
                         >
                           <Lock className="w-3 h-3" /> AES-256
                         </button>
+                      )}
+                    </div>
+
+                    {/* Penyuluh Identity Line */}
+                    <div className="text-xs text-slate-600 flex items-center gap-1.5">
+                      <span className="font-bold text-slate-800">{lap.penyuluhNama || 'Dr. Hj. Masniati, S.Ag, M.Sos.I'}</span>
+                      {lap.penyuluhNip && (
+                        <span className="text-slate-400 font-mono text-[11px]">&bull; NIP: {lap.penyuluhNip}</span>
                       )}
                     </div>
 
@@ -285,7 +349,7 @@ export const ReportList: React.FC<ReportListProps> = ({
                           onVerifyLaporan(
                             lap.id,
                             'terverifikasi',
-                            'Disetujui dan diverifikasi secara digital oleh Kepala KUA Somba Opu.'
+                            `Disetujui dan diverifikasi secara digital oleh Kepala KUA Kecamatan ${lap.kecamatan || 'Somba Opu'}.`
                           )
                         }
                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 text-xs font-bold shadow-xs active:scale-95 transition-all"
