@@ -17,7 +17,8 @@ import {
   AlertCircle, 
   ShieldCheck, 
   Lock, 
-  Info 
+  Info,
+  Cloud 
 } from 'lucide-react';
 import { 
   LaporanKegiatan, 
@@ -39,7 +40,8 @@ import {
   saveStoredNotifikasi, 
   addLaporan, 
   updateStatusVerifikasi, 
-  syncOfflineQueue 
+  syncOfflineQueue,
+  syncWithFirebase 
 } from './utils/storage';
 import { exportLaporanToExcel } from './utils/exportExcel';
 import { Navbar } from './components/Navbar';
@@ -49,6 +51,7 @@ import { ReportList } from './components/ReportList';
 import { OfficialDocumentViewer } from './components/OfficialDocumentViewer';
 import { AdminNotificationModal } from './components/AdminNotificationModal';
 import { EncryptionSecurityModal } from './components/EncryptionSecurityModal';
+import { CloudDeploymentModal } from './components/CloudDeploymentModal';
 
 export default function App() {
   const [laporanList, setLaporanList] = useState<LaporanKegiatan[]>(() => getStoredLaporan());
@@ -62,6 +65,7 @@ export default function App() {
   const [activeView, setActiveView] = useState<'dashboard' | 'reports' | 'create_report' | 'official_docs'>('dashboard');
   const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
   const [isEncryptionModalOpen, setIsEncryptionModalOpen] = useState(false);
+  const [isCloudModalOpen, setIsCloudModalOpen] = useState(false);
   const [activeEncryptionReport, setActiveEncryptionReport] = useState<LaporanKegiatan | undefined>(undefined);
   const [selectedDocReportId, setSelectedDocReportId] = useState<string | undefined>(undefined);
   const [docInitialTab, setDocInitialTab] = useState<
@@ -77,6 +81,20 @@ export default function App() {
       setToast(null);
     }, 4000);
   };
+
+  // Initial background sync with Firebase Firestore on mount
+  useEffect(() => {
+    if (navigator.onLine) {
+      syncWithFirebase().then((res) => {
+        if (res.success && res.laporan.length > 0) {
+          setLaporanList(res.laporan);
+          setNotifikasiList(res.notifikasi);
+        }
+      }).catch((err) => {
+        console.warn('Initial Firebase sync warning:', err);
+      });
+    }
+  }, []);
 
   // Sync network state
   useEffect(() => {
@@ -220,6 +238,7 @@ export default function App() {
           setIsEncryptionModalOpen(true);
         }}
         onOpenDocumentViewer={() => handleOpenDocViewer(undefined, 'cover')}
+        onOpenCloudModal={() => setIsCloudModalOpen(true)}
         activeView={activeView}
         onNavigate={setActiveView}
       />
@@ -258,6 +277,14 @@ export default function App() {
               </div>
 
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsCloudModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-emerald-300 text-xs font-bold transition-all shadow-2xs border border-slate-700"
+                >
+                  <Cloud className="w-4 h-4 text-emerald-400" />
+                  Onlinekan ke Vercel
+                </button>
+
                 <button
                   onClick={() =>
                     exportLaporanToExcel(
@@ -450,6 +477,17 @@ export default function App() {
         isOpen={isEncryptionModalOpen}
         onClose={() => setIsEncryptionModalOpen(false)}
         laporan={activeEncryptionReport || laporanList[0]}
+      />
+
+      {/* Cloud, GitHub & Vercel Deployment Modal */}
+      <CloudDeploymentModal
+        isOpen={isCloudModalOpen}
+        onClose={() => setIsCloudModalOpen(false)}
+        onSyncComplete={(newLaporan, newNotifs) => {
+          setLaporanList(newLaporan);
+          setNotifikasiList(newNotifs);
+        }}
+        showToast={showToast}
       />
     </div>
   );

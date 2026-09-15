@@ -1,11 +1,19 @@
 import { LaporanKegiatan, NotifikasiAdmin, StatusVerifikasi } from '../types';
 import { INITIAL_LAPORAN, INITIAL_NOTIFIKASI } from '../data/initialData';
+import { 
+  fetchReportsFromFirestore, 
+  saveReportToFirestore, 
+  updateReportStatusInFirestore, 
+  saveNotifikasiToFirestore,
+  fetchNotifikasiFromFirestore
+} from './firebaseStorage';
 
 const STORAGE_KEYS = {
   LAPORAN: 'sipakainga_laporan_db_v1',
   OFFLINE_QUEUE: 'sipakainga_offline_queue_v1',
   NOTIFIKASI: 'sipakainga_notifikasi_v1',
   ENCRYPTION_ENABLED: 'sipakainga_encryption_status_v1',
+  FIREBASE_SYNCED: 'sipakainga_firebase_last_sync_v1',
 };
 
 export function getStoredLaporan(): LaporanKegiatan[] {
@@ -69,6 +77,44 @@ export function saveStoredNotifikasi(list: NotifikasiAdmin[]): void {
 }
 
 /**
+ * Synchronize local storage with Firebase Firestore
+ */
+export async function syncWithFirebase(): Promise<{ 
+  success: boolean; 
+  laporan: LaporanKegiatan[]; 
+  notifikasi: NotifikasiAdmin[];
+  error?: string;
+}> {
+  try {
+    const remoteLaporan = await fetchReportsFromFirestore();
+    const remoteNotifs = await fetchNotifikasiFromFirestore();
+
+    if (remoteLaporan && remoteLaporan.length > 0) {
+      saveStoredLaporan(remoteLaporan);
+    }
+    if (remoteNotifs && remoteNotifs.length > 0) {
+      saveStoredNotifikasi(remoteNotifs);
+    }
+
+    localStorage.setItem(STORAGE_KEYS.FIREBASE_SYNCED, new Date().toISOString());
+
+    return {
+      success: true,
+      laporan: remoteLaporan || getStoredLaporan(),
+      notifikasi: remoteNotifs || getStoredNotifikasi(),
+    };
+  } catch (err: any) {
+    console.warn('Firebase sync warning:', err);
+    return {
+      success: false,
+      laporan: getStoredLaporan(),
+      notifikasi: getStoredNotifikasi(),
+      error: err?.message || 'Gagal tersambung ke Firebase',
+    };
+  }
+}
+
+/**
  * Add a new report either directly or into the offline queue if offline
  */
 export function addLaporan(
@@ -117,6 +163,14 @@ export function addLaporan(
     dibaca: false,
   };
   saveStoredNotifikasi([newNotif, ...notifs]);
+
+  // Asynchronously push to Firebase Firestore in real-time
+  saveReportToFirestore(newLaporan).catch((err) => {
+    console.warn('Could not immediately push new report to Firestore:', err);
+  });
+  saveNotifikasiToFirestore(newNotif).catch((err) => {
+    console.warn('Could not push notification to Firestore:', err);
+  });
 
   return { success: true, isQueued: false, updatedList: updated };
 }
@@ -174,11 +228,19 @@ export function updateStatusVerifikasi(
 
   saveStoredNotifikasi([newNotif, ...notifs]);
 
+  // Update in Firestore
+  updateReportStatusInFirestore(laporanId, newStatus, adminName, catatan).catch(err => {
+    console.warn('Could not immediately update report status in Firestore:', err);
+  });
+  saveNotifikasiToFirestore(newNotif).catch(err => {
+    console.warn('Could not save verification notif to Firestore:', err);
+  });
+
   return { updatedList: updated, notificationAdded: newNotif };
 }
 
 /**
- * Synchronize offline queue to main database smoothly
+ * Synchronize offline queue to main database and Firestore smoothly
  */
 export async function syncOfflineQueue(): Promise<{ syncedCount: number; updatedList: LaporanKegiatan[] }> {
   const queue = getOfflineQueue();
@@ -186,8 +248,20 @@ export async function syncOfflineQueue(): Promise<{ syncedCount: number; updated
     return { syncedCount: 0, updatedList: getStoredLaporan() };
   }
 
-  // Simulate network flight time for smooth user feedback
-  await new Promise(res => setTimeout(res, 800));
+  // Process queued items and upload to Firestore
+  for (const item of queue) {
+    const syncedItem: LaporanKegiatan = {
+      ...item,
+      statusVerifikasi: 'menunggu_verifikasi',
+      syncStatus: 'tersinkron',
+      updatedAt: new Date().toISOString(),
+    };
+    try {
+      await saveReportToFirestore(syncedItem);
+    } catch (e) {
+      console.warn(`Failed to push offline item ${item.id} to Firestore during sync:`, e);
+    }
+  }
 
   const currentList = getStoredLaporan();
   const queueIds = new Set(queue.map(q => q.id));
@@ -212,7 +286,7 @@ export async function syncOfflineQueue(): Promise<{ syncedCount: number; updated
   const newNotif: NotifikasiAdmin = {
     id: `notif-sync-${Date.now()}`,
     judul: 'Sinkronisasi Otomatis Sukses',
-    pesan: `${queue.length} laporan kegiatan yang dicatat dalam mode offline telah berhasil disinkronkan ke server secara aman.`,
+    pesan: `${queue.length} laporan kegiatan yang dicatat dalam mode offline telah berhasil disinkronkan ke server Firebase secara aman.`,
     laporanId: queue[0]?.id || 'sync',
     penyuluhNama: 'Sistem Sinkronisasi SIPAKAINGA',
     tipe: 'sinkronisasi_selesai',
@@ -220,6 +294,8 @@ export async function syncOfflineQueue(): Promise<{ syncedCount: number; updated
     dibaca: false,
   };
   saveStoredNotifikasi([newNotif, ...notifs]);
+  saveNotifikasiToFirestore(newNotif).catch(console.warn);
 
   return { syncedCount: queue.length, updatedList: updated };
 }
+

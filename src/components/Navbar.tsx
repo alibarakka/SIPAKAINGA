@@ -12,7 +12,8 @@ import {
   BarChart3, 
   Layers, 
   Check, 
-  HelpCircle 
+  HelpCircle,
+  Cloud 
 } from 'lucide-react';
 import { UserRole } from '../types';
 import { LogoKemenag, LogoIpari, LogoEPA } from './Logos';
@@ -29,6 +30,7 @@ interface NavbarProps {
   onOpenNotifs: () => void;
   onOpenEncryptionModal: () => void;
   onOpenDocumentViewer: () => void;
+  onOpenCloudModal: () => void;
   activeView: 'dashboard' | 'reports' | 'create_report' | 'official_docs';
   onNavigate: (view: 'dashboard' | 'reports' | 'create_report' | 'official_docs') => void;
 }
@@ -45,6 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenNotifs,
   onOpenEncryptionModal,
   onOpenDocumentViewer,
+  onOpenCloudModal,
   activeView,
   onNavigate,
 }) => {
@@ -112,6 +115,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               <span className="hidden md:inline">AES-256</span>
+            </button>
+
+            {/* Cloud, GitHub & Vercel Deployment status */}
+            <button
+              onClick={onOpenCloudModal}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-950/80 text-emerald-200 border border-emerald-500/50 hover:bg-emerald-800 transition-all"
+              title="Integrasi Firebase, GitHub, dan Vercel"
+            >
+              <Cloud className="w-3.5 h-3.5 text-emerald-300" />
+              <span>Cloud &amp; Vercel</span>
             </button>
 
             {/* Admin Notification Bell */}

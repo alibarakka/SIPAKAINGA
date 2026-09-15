@@ -1,0 +1,54 @@
+{
+  "entities": {
+    "laporan_kegiatan": {
+      "title": "Laporan Kegiatan",
+      "description": "Laporan bimbingan dan penyuluhan agama dan pembangunan",
+      "type": "object",
+      "properties": {
+        "penyuluhId": { "type": "string" },
+        "penyuluhNama": { "type": "string" },
+        "penyuluhNip": { "type": "string" },
+        "kelompokSasaran": { "type": "string" },
+        "kontakKelompok": { "type": "string" },
+        "kategoriMateri": { "type": "string" },
+        "judulMateri": { "type": "string" },
+        "deskripsiKegiatan": { "type": "string" },
+        "deskripsiSingkatMateri": { "type": "string" },
+        "hari": { "type": "string" },
+        "tanggalPelaksanaan": { "type": "string" },
+        "waktu": { "type": "string" },
+        "lokasiSpesifik": { "type": "string" },
+        "jumlahPeserta": { "type": "number" },
+        "koordinat": { "type": "object" },
+        "fotoList": { "type": "array" },
+        "statusVerifikasi": { "type": "string" },
+        "diverifikasiOleh": { "type": "string" },
+        "catatanVerifikasi": { "type": "string" },
+        "tanggalVerifikasi": { "type": "string" },
+        "encryptedDataHash": { "type": "string" },
+        "isEncrypted": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["penyuluhNama", "kelompokSasaran", "kategoriMateri", "judulMateri", "tanggalPelaksanaan"]
+    },
+    "notifikasi": {
+      "title": "Notifikasi Admin",
+      "description": "Pemberitahuan laporan dan verifikasi",
+      "type": "object",
+      "properties": {
+        "judul": { "type": "string" },
+        "pesan": { "type": "string" },
+        "tipe": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "dibaca": { "type": "boolean" },
+        "laporanId": { "type": "string" },
+        "penyuluhNama": { "type": "string" }
+      },
+      "required": ["judul", "pesan", "tipe", "timestamp"]
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}
