@@ -55,6 +55,54 @@ export interface KepalaKUAProfile {
   emailKua: string;
 }
 
+export interface UserProfile {
+  uid: string;
+  email: string;
+  role: UserRole;
+  nama: string;
+  nip: string;
+  nipa?: string;
+  jabatan: string;
+  pangkatGol: string;
+  kecamatan: KecamatanGowa;
+  phone: string;
+  wilTugas?: string;
+  unitKerja?: string;
+  kuaName?: string;
+  alamatKua?: string;
+  teleponKua?: string;
+  fotoUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+  source: 'firebase' | 'local';
+}
+
+export interface RegisterPenyuluhData {
+  nama: string;
+  nip: string;
+  nipa?: string;
+  jabatan: JenjangJabatan;
+  pangkatGol: string;
+  kecamatan: KecamatanGowa;
+  wilTugas: string;
+  phone: string;
+  email: string;
+  password: string;
+}
+
+export interface RegisterKepalaKUAData {
+  nama: string;
+  nip: string;
+  pangkatGol: string;
+  jabatan: string;
+  kecamatan: KecamatanGowa;
+  kuaName: string;
+  alamatKua: string;
+  teleponKua: string;
+  email: string;
+  password: string;
+}
+
 export type JenisLaporan =
   | 'bimbingan_penyuluhan' // LAPORAN PELAKSANAAN BIMBINGAN DAN PENYULUHAN AGAMA DAN PEMBANGUNAN
   | 'konseling_informasi' // LAPORAN LAYANAN KONSELING / INFORMASI PENYULUH AGAMA ISLAM PERORANGAN DAN KELOMPOK

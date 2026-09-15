@@ -26,7 +26,8 @@ import {
   NotifikasiAdmin, 
   StatusVerifikasi,
   PenyuluhProfile,
-  KecamatanGowa 
+  KecamatanGowa,
+  UserProfile 
 } from './types';
 import { 
   CURRENT_PENYULUH, 
@@ -49,6 +50,10 @@ import {
   syncOfflineQueue,
   syncWithFirebase 
 } from './utils/storage';
+import { 
+  getStoredCurrentUser, 
+  userToPenyuluhProfile 
+} from './services/authService';
 import { exportLaporanToExcel } from './utils/exportExcel';
 import { Navbar } from './components/Navbar';
 import { DashboardAnalytics } from './components/DashboardAnalytics';
@@ -59,6 +64,7 @@ import { AdminNotificationModal } from './components/AdminNotificationModal';
 import { EncryptionSecurityModal } from './components/EncryptionSecurityModal';
 import { CloudDeploymentModal } from './components/CloudDeploymentModal';
 import { ProfileRoleSelectorModal } from './components/ProfileRoleSelectorModal';
+import { AuthModal } from './components/AuthModal';
 
 export default function App() {
   const [laporanList, setLaporanList] = useState<LaporanKegiatan[]>(() => getStoredLaporan());
@@ -68,12 +74,38 @@ export default function App() {
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
+  // Authentication & Registered User state
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => getStoredCurrentUser());
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+
   // Multi-tenant profile & KUA context state
-  const [activePenyuluh, setActivePenyuluh] = useState<PenyuluhProfile>(() => CURRENT_PENYULUH);
+  const [activePenyuluh, setActivePenyuluh] = useState<PenyuluhProfile>(() => {
+    const saved = getStoredCurrentUser();
+    if (saved && saved.role === 'penyuluh') {
+      return userToPenyuluhProfile(saved);
+    }
+    return CURRENT_PENYULUH;
+  });
   const [activeKecamatan, setActiveKecamatan] = useState<KecamatanGowa>(
-    () => (CURRENT_PENYULUH.kecamatan as KecamatanGowa) || 'Somba Opu'
+    () => {
+      const saved = getStoredCurrentUser();
+      if (saved) return saved.kecamatan;
+      return (CURRENT_PENYULUH.kecamatan as KecamatanGowa) || 'Somba Opu';
+    }
   );
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  // Handle active user login/logout/switch
+  const handleUserChange = (user: UserProfile | null) => {
+    setCurrentUser(user);
+    if (user) {
+      setCurrentRole(user.role);
+      setActiveKecamatan(user.kecamatan);
+      if (user.role === 'penyuluh') {
+        setActivePenyuluh(userToPenyuluhProfile(user));
+      }
+    }
+  };
 
   // Current active Kepala KUA based on selected Kecamatan
   const activeKepalaKua = getKepalaKUA(activeKecamatan);
@@ -265,6 +297,8 @@ export default function App() {
         onOpenCloudModal={() => setIsCloudModalOpen(true)}
         activeView={activeView}
         onNavigate={setActiveView}
+        currentUser={currentUser}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -562,6 +596,16 @@ export default function App() {
           }
           showToast(`Wilayah KUA berhasil dialihkan ke: KUA Kecamatan ${kec}`, 'info');
         }}
+        showToast={showToast}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
+      />
+
+      {/* Authentication (Login & Registration) Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        currentUser={currentUser}
+        onUserChange={handleUserChange}
         showToast={showToast}
       />
     </div>

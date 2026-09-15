@@ -46,9 +46,43 @@
         "penyuluhNama": { "type": "string" }
       },
       "required": ["judul", "pesan", "tipe", "timestamp"]
+    },
+    "user_profile": {
+      "title": "Profil Pengguna",
+      "description": "Data akun terdaftar Penyuluh Agama Islam atau Kepala KUA",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["penyuluh", "admin", "kemenag_kabupaten"] },
+        "nama": { "type": "string" },
+        "nip": { "type": "string" },
+        "nipa": { "type": "string" },
+        "jabatan": { "type": "string" },
+        "pangkatGol": { "type": "string" },
+        "kecamatan": { "type": "string" },
+        "phone": { "type": "string" },
+        "wilTugas": { "type": "string" },
+        "unitKerja": { "type": "string" },
+        "kuaName": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "email", "role", "nama", "nip", "kecamatan"]
     }
   },
   "firestore": {
-    "rules": "firestore.rules"
+    "/users/{userId}": {
+      "schema": "user_profile",
+      "description": "Data profil akun Penyuluh Agama Islam dan Kepala KUA"
+    },
+    "/laporan_kegiatan/{laporanId}": {
+      "schema": "laporan_kegiatan",
+      "description": "Koleksi dokumen laporan kegiatan kepenyuluhan"
+    },
+    "/notifikasi/{notifikasiId}": {
+      "schema": "notifikasi",
+      "description": "Pemberitahuan verifikasi dan pengiriman laporan"
+    }
   }
 }

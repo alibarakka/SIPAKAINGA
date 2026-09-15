@@ -12,7 +12,9 @@ import {
   CheckCircle2, 
   PlusCircle, 
   ChevronRight,
-  Sparkles
+  Sparkles,
+  LogIn,
+  KeyRound
 } from 'lucide-react';
 import { 
   UserRole, 
@@ -40,6 +42,7 @@ interface ProfileRoleSelectorModalProps {
   activeKecamatan: KecamatanGowa;
   onSelectKecamatan: (kec: KecamatanGowa) => void;
   showToast: (msg: string, type?: 'success' | 'info' | 'warning') => void;
+  onOpenAuthModal?: () => void;
 }
 
 export const ProfileRoleSelectorModal: React.FC<ProfileRoleSelectorModalProps> = ({
@@ -51,7 +54,8 @@ export const ProfileRoleSelectorModal: React.FC<ProfileRoleSelectorModalProps> =
   onSelectPenyuluh,
   activeKecamatan,
   onSelectKecamatan,
-  showToast
+  showToast,
+  onOpenAuthModal
 }) => {
   const [selectedRole, setSelectedRole] = useState<UserRole>(currentRole);
   const [selectedKec, setSelectedKec] = useState<KecamatanGowa>(activeKecamatan);
@@ -138,6 +142,36 @@ export const ProfileRoleSelectorModal: React.FC<ProfileRoleSelectorModalProps> =
 
         {/* Content */}
         <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+          {/* Auth Portal Link Banner */}
+          {onOpenAuthModal && (
+            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-emerald-700 text-white shrink-0">
+                  <KeyRound className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-emerald-950">
+                    Ingin mendaftar akun baru atau masuk dengan email/Google?
+                  </h4>
+                  <p className="text-[11px] text-emerald-700">
+                    Registrasi Penyuluh &amp; Kepala KUA dengan database cloud Firestore terintegrasi
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenAuthModal();
+                }}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold shrink-0 transition-colors shadow-2xs"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Buka Portal Akun</span>
+              </button>
+            </div>
+          )}
+
           {/* Step 1: Pilih Peran */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">

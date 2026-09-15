@@ -16,9 +16,11 @@ import {
   Cloud,
   Building2,
   User,
-  SlidersHorizontal
+  SlidersHorizontal,
+  LogIn,
+  KeyRound
 } from 'lucide-react';
-import { UserRole, PenyuluhProfile, KecamatanGowa } from '../types';
+import { UserRole, PenyuluhProfile, KecamatanGowa, UserProfile } from '../types';
 import { LogoKemenag, LogoIpari, LogoEPA } from './Logos';
 
 interface NavbarProps {
@@ -39,6 +41,8 @@ interface NavbarProps {
   onOpenCloudModal: () => void;
   activeView: 'dashboard' | 'reports' | 'create_report' | 'official_docs';
   onNavigate: (view: 'dashboard' | 'reports' | 'create_report' | 'official_docs') => void;
+  currentUser?: UserProfile | null;
+  onOpenAuthModal: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -59,6 +63,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCloudModal,
   activeView,
   onNavigate,
+  currentUser,
+  onOpenAuthModal,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-2xs">
@@ -140,6 +146,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Cloud className="w-3.5 h-3.5 text-emerald-300" />
               <span>Cloud &amp; Vercel</span>
+            </button>
+
+            {/* Portal Akun: Masuk & Daftar Akun Button */}
+            <button
+              onClick={onOpenAuthModal}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-2xs"
+              title="Portal Registrasi & Login Akun Penyuluh/Kepala KUA"
+            >
+              <KeyRound className="w-3.5 h-3.5" />
+              <span>{currentUser ? currentUser.nama.split(',')[0] : 'Portal Akun (Masuk/Daftar)'}</span>
             </button>
 
             {/* Admin Notification Bell */}
@@ -283,6 +299,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               Kepala KUA
             </button>
           </div>
+
+          {/* Auth Button */}
+          <button
+            onClick={onOpenAuthModal}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold shadow-2xs transition-all"
+            title="Masuk atau Daftarkan Akun Resmi"
+          >
+            <LogIn className="w-3.5 h-3.5" />
+            <span className="hidden xl:inline">{currentUser ? 'Akun Saya' : 'Masuk / Daftar'}</span>
+          </button>
         </div>
       </div>
     </header>

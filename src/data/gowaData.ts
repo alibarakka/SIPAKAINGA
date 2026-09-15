@@ -51,6 +51,18 @@ export const JENJANG_JABATAN_LIST: {
   }
 ];
 
+export const GOLONGAN_OPTIONS: string[] = [
+  'Penata Muda / IIIa',
+  'Penata Muda Tk. I / IIIb',
+  'Penata / IIIc',
+  'Penata Tk. I / IIId',
+  'Pembina / IVa',
+  'Pembina Tk. I / IVb',
+  'Pembina Utama Muda / IVc',
+  'Pembina Utama Madya / IVd',
+  'Pembina Utama / IVe'
+];
+
 export const KUA_DATABASE: Record<KecamatanGowa, KepalaKUAProfile> = {
   'Somba Opu': {
     kecamatan: 'Somba Opu',
